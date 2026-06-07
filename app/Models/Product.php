@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
@@ -22,6 +23,7 @@ class Product extends Model
         'price',
         'sku',
         'stock_quantity',
+        'specs',
         'is_active',
         'position',
     ];
@@ -34,6 +36,7 @@ class Product extends Model
         return [
             'price' => 'integer', // cents
             'stock_quantity' => 'integer',
+            'specs' => 'array', // JSON column ⇄ PHP array
             'is_active' => 'boolean',
             'position' => 'integer',
         ];
@@ -45,6 +48,14 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * A product has many media items (gallery), ordered for display.
+     */
+    public function media(): HasMany
+    {
+        return $this->hasMany(ProductMedia::class)->orderBy('position');
     }
 
     /**
