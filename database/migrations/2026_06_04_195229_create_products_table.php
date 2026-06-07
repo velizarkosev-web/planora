@@ -14,16 +14,16 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')->constrained()->restrictOnDelete();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->text('description')->nullable();
-            $table->unsignedInteger('price'); // stored in cents — never a float
-            $table->string('sku')->nullable()->unique();
-            $table->unsignedInteger('stock_quantity')->default(0);
+            $table->json('name');               // translatable: {"bg":..., "en":...}
+            $table->string('slug')->unique();   // single canonical slug (not translated)
+            $table->json('description')->nullable(); // translatable
+            $table->json('specs')->nullable();  // category-specific specs, e.g. {"year":2026}
+            $table->json('personalization')->nullable(); // config of customisable fields
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('position')->default(0);
             $table->timestamps();
             $table->softDeletes();
+            // Note: price, sku and stock now live on product_variants (the buyable unit).
         });
     }
 

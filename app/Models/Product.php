@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Translatable\HasTranslations;
 
 class Product extends Model
 {
+    use HasTranslations;
     use SoftDeletes;
 
     /**
@@ -20,12 +21,18 @@ class Product extends Model
         'name',
         'slug',
         'description',
-        'price',
-        'sku',
-        'stock_quantity',
         'specs',
+        'personalization',
         'is_active',
         'position',
+    ];
+
+    /**
+     * Translatable attributes — stored as JSON ({"bg":..., "en":...}).
+     */
+    public array $translatable = [
+        'name',
+        'description',
     ];
 
     /**
@@ -34,9 +41,8 @@ class Product extends Model
     protected function casts(): array
     {
         return [
-            'price' => 'integer', // cents
-            'stock_quantity' => 'integer',
-            'specs' => 'array', // JSON column ⇄ PHP array
+            'specs' => 'array',           // category-specific specs ⇄ PHP array
+            'personalization' => 'array', // customisable-field config ⇄ PHP array
             'is_active' => 'boolean',
             'position' => 'integer',
         ];
@@ -51,22 +57,18 @@ class Product extends Model
     }
 
     /**
+     * A product is sold through one or more variants (the buyable units).
+     */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->orderBy('position');
+    }
+
+    /**
      * A product has many media items (gallery), ordered for display.
      */
     public function media(): HasMany
     {
         return $this->hasMany(ProductMedia::class)->orderBy('position');
-    }
-
-    /**
-     * Convenience: read/write the price in major units (e.g. 19.99)
-     * while the database keeps it as an integer number of cents (1999).
-     */
-    protected function priceInMajorUnits(): Attribute
-    {
-        return Attribute::make(
-            get: fn (mixed $value, array $attributes): float => $attributes['price'] / 100,
-            set: fn (float $value): array => ['price' => (int) round($value * 100)],
-        );
     }
 }

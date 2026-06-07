@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->text('description')->nullable();
+            $table->json('name');               // translatable: {"bg":..., "en":...}
+            $table->string('slug')->unique();   // single canonical slug (not translated)
+            $table->json('description')->nullable(); // translatable
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('position')->default(0);
             $table->timestamps();
