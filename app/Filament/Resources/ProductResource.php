@@ -117,6 +117,17 @@ class ProductResource extends Resource
                             ->addActionLabel('Добави характеристика'),
                     ]),
 
+                Forms\Components\Section::make('Снимка')
+                    ->schema([
+                        Forms\Components\FileUpload::make('primary_image')
+                            ->label('Основна снимка')
+                            ->image()
+                            ->disk('public')
+                            ->directory('products')
+                            ->imageEditor()
+                            ->maxSize(20480),
+                    ]),
+
                 Forms\Components\Section::make('Публикуване')
                     ->schema([
                         Forms\Components\Select::make('state')
@@ -142,6 +153,11 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('primaryMedia.path')
+                    ->label('Снимка')
+                    ->disk('public')
+                    ->square(),
+
                 Tables\Columns\TextColumn::make('name')
                     ->label('Име')
                     ->searchable()
@@ -216,6 +232,13 @@ class ProductResource extends Resource
                         Infolists\Components\TextEntry::make('description')->label('Описание')->placeholder('—'),
                     ])
                     ->columns(2),
+
+                Infolists\Components\Section::make('Снимка')
+                    ->schema([
+                        Infolists\Components\ImageEntry::make('primaryMedia.path')
+                            ->label('Основна снимка')
+                            ->disk('public'),
+                    ]),
 
                 Infolists\Components\Section::make('Цена и наличност')
                     ->schema([

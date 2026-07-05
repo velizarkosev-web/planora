@@ -77,6 +77,11 @@ class Product extends Model
         return $this->hasOne(ProductVariant::class)->orderBy('position');
     }
 
+    public function primaryMedia(): HasOne
+    {
+        return $this->hasOne(ProductMedia::class)->where('is_primary', true);
+    }
+
     /**
      * A product has many media items (gallery), ordered for display.
      */

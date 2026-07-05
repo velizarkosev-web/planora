@@ -15,6 +15,8 @@ class EditProduct extends EditRecord
     /** Variant-owned form values, stashed between the two lifecycle hooks below. */
     protected array $variantData = [];
 
+    protected ?string $imagePath = null;
+
     protected function getHeaderActions(): array
     {
         return [
@@ -34,7 +36,10 @@ class EditProduct extends EditRecord
      */
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        return ProductResource::injectVariantData($data, $this->record);
+        $data = ProductResource::injectVariantData($data, $this->record);
+        $data['primary_image'] = $this->record->media()->where('is_primary', true)->value('path');
+
+        return $data;
     }
 
     /**
@@ -43,6 +48,8 @@ class EditProduct extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $this->variantData = ProductResource::extractVariantData($data);
+        $this->imagePath = $data['primary_image'] ?? null;
+        unset($data['primary_image']);
 
         return $data;
     }
@@ -56,5 +63,14 @@ class EditProduct extends EditRecord
             'is_active' => true,
             'position' => 0,
         ]);
+
+        if ($this->imagePath !== null) {
+            $this->record->media()->updateOrCreate(
+                ['is_primary' => true],
+                ['path' => $this->imagePath, 'type' => 'image', 'position' => 0],
+            );
+        } else {
+            $this->record->media()->where('is_primary', true)->delete();
+        }
     }
 }
