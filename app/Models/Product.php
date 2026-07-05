@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 
@@ -24,6 +25,7 @@ class Product extends Model
         'specs',
         'personalization',
         'is_active',
+        'state',
         'position',
     ];
 
@@ -62,6 +64,17 @@ class Product extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class)->orderBy('position');
+    }
+
+    /**
+     * The single "default" variant that carries price/stock for a simple product.
+     * (The lowest-position variant.) This is what the admin's Price/Наличност fields
+     * read from and write to, so the "variant" concept stays invisible until a product
+     * genuinely needs multiple options.
+     */
+    public function defaultVariant(): HasOne
+    {
+        return $this->hasOne(ProductVariant::class)->orderBy('position');
     }
 
     /**

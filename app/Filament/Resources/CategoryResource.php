@@ -78,8 +78,11 @@ class CategoryResource extends Resource
                     ->counts('products')
                     ->label('Продукти'),
 
-                Tables\Columns\ToggleColumn::make('is_active')
-                    ->label('Статус'),
+                Tables\Columns\TextColumn::make('is_active')
+                    ->label('Статус')
+                    ->badge()
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Активен' : 'Неактивен')
+                    ->color(fn (bool $state): string => $state ? 'success' : 'danger'),
 
                 Tables\Columns\TextColumn::make('position')
                     ->sortable()

@@ -19,6 +19,8 @@ class ProductVariant extends Model
         'sku',
         'price',
         'sale_price',
+        'sale_starts_at',
+        'sale_ends_at',
         'stock_quantity',
         'options',
         'is_active',
@@ -37,6 +39,8 @@ class ProductVariant extends Model
         return [
             'price' => 'integer',       // cents
             'sale_price' => 'integer',  // cents (nullable)
+            'sale_starts_at' => 'datetime',
+            'sale_ends_at' => 'datetime',
             'stock_quantity' => 'integer',
             'options' => 'array',       // {"Colour":"Navy"} ⇄ PHP array
             'is_active' => 'boolean',
@@ -53,12 +57,30 @@ class ProductVariant extends Model
     }
 
     /**
-     * Is this variant currently on sale? (sale_price set and below the regular price)
+     * Is this variant on sale *right now*? True only when a lower sale_price is set
+     * AND the current moment falls inside the (optional) start/end window. A null
+     * bound means "open-ended" on that side.
      */
     protected function isOnSale(): Attribute
     {
         return Attribute::make(
-            get: fn (): bool => $this->sale_price !== null && $this->sale_price < $this->price,
+            get: function (): bool {
+                if ($this->sale_price === null || $this->sale_price >= $this->price) {
+                    return false;
+                }
+
+                $now = now();
+
+                if ($this->sale_starts_at !== null && $now->lt($this->sale_starts_at)) {
+                    return false; // sale hasn't started yet
+                }
+
+                if ($this->sale_ends_at !== null && $now->gt($this->sale_ends_at)) {
+                    return false; // sale has already ended
+                }
+
+                return true;
+            },
         );
     }
 
