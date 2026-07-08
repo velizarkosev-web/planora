@@ -14,6 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 class ProductResource extends Resource
 {
@@ -334,5 +335,32 @@ class ProductResource extends Resource
         $data['sale_ends_at'] = $variant?->sale_ends_at;
 
         return $data;
+    }
+
+    /**
+     * Filament's FileUpload keeps its state as an array ([uuid => path]) even for a
+     * single file, so wrap the stored primary-image path into that shape for the edit form.
+     */
+    public static function primaryImageFormState(Product $product): array
+    {
+        $path = $product->media()->where('is_primary', true)->value('path');
+
+        return $path ? [(string) Str::uuid() => $path] : [];
+    }
+
+    /**
+     * Pull the primary-image path out of submitted form data (mutating it). FileUpload may
+     * hand us a single string or a [uuid => path] array depending on the flow — handle both.
+     */
+    public static function extractImagePath(array &$data): ?string
+    {
+        $image = $data['primary_image'] ?? null;
+        unset($data['primary_image']);
+
+        if (is_array($image)) {
+            $image = $image === [] ? null : (string) array_values($image)[0];
+        }
+
+        return ($image === '' || $image === null) ? null : $image;
     }
 }

@@ -37,8 +37,8 @@ class CreateProduct extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $this->variantData = ProductResource::extractVariantData($data);
-        $this->imagePath = $data['primary_image'] ?? null;
-        unset($data['primary_image']);
+        $this->imagePath = ProductResource::extractImagePath($data);
+
         return $data;
     }
 

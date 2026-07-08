@@ -37,7 +37,7 @@ class EditProduct extends EditRecord
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $data = ProductResource::injectVariantData($data, $this->record);
-        $data['primary_image'] = $this->record->media()->where('is_primary', true)->value('path');
+        $data['primary_image'] = ProductResource::primaryImageFormState($this->record);
 
         return $data;
     }
@@ -48,8 +48,7 @@ class EditProduct extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $this->variantData = ProductResource::extractVariantData($data);
-        $this->imagePath = $data['primary_image'] ?? null;
-        unset($data['primary_image']);
+        $this->imagePath = ProductResource::extractImagePath($data);
 
         return $data;
     }
