@@ -18,7 +18,7 @@ class ProductController extends Controller
             ->where('slug', $slug)
             ->where('state', 'published')
             ->where('is_active', true)
-            ->with(['category', 'defaultVariant', 'primaryMedia'])
+            ->with(['category', 'defaultVariant', 'media'])
             ->firstOrFail();
 
         $variant = $product->defaultVariant;
@@ -36,8 +36,8 @@ class ProductController extends Controller
                 'onSale' => (bool) $variant?->is_on_sale,
                 'inStock' => (int) ($variant?->stock_quantity ?? 0) > 0,
                 'specs' => $product->specs,
-                // Storage path only; Vue builds the Glide URLs (/img/...?w=...).
-                'image' => $product->primaryMedia?->path,
+                // Ordered list of storage paths; Vue builds the Glide URLs (/img/...?w=...).
+                'images' => $product->media->pluck('path')->values()->all(),
             ],
         ]);
     }

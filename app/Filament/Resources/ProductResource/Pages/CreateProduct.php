@@ -15,7 +15,7 @@ class CreateProduct extends CreateRecord
     /** Variant-owned form values, stashed between the two lifecycle hooks below. */
     protected array $variantData = [];
 
-    protected ?string $imagePath = null;
+    protected array $galleryPaths = [];
 
     protected function getHeaderActions(): array
     {
@@ -37,7 +37,7 @@ class CreateProduct extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $this->variantData = ProductResource::extractVariantData($data);
-        $this->imagePath = ProductResource::extractImagePath($data);
+        $this->galleryPaths = ProductResource::extractGallery($data);
 
         return $data;
     }
@@ -53,13 +53,6 @@ class CreateProduct extends CreateRecord
             'position' => 0,
         ]);
 
-        if ($this->imagePath !== null) {
-            $this->record->media()->create([
-                'path' => $this->imagePath,
-                'type' => 'image',
-                'is_primary' => true,
-                'position' => 0,
-            ]);
-        }
+        ProductResource::syncGallery($this->record, $this->galleryPaths);
     }
 }

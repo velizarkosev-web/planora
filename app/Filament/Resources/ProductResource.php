@@ -14,7 +14,6 @@ use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 
 class ProductResource extends Resource
 {
@@ -118,15 +117,19 @@ class ProductResource extends Resource
                             ->addActionLabel('Добави характеристика'),
                     ]),
 
-                Forms\Components\Section::make('Снимка')
+                Forms\Components\Section::make('Снимки')
                     ->schema([
-                        Forms\Components\FileUpload::make('primary_image')
-                            ->label('Основна снимка')
+                        Forms\Components\FileUpload::make('gallery')
+                            ->label('Снимки')
                             ->image()
+                            ->multiple()
+                            ->reorderable()
+                            ->appendFiles()
                             ->disk('public')
                             ->directory('products')
                             ->imageEditor()
-                            ->maxSize(20480),
+                            ->maxSize(20480)
+                            ->helperText('Първата снимка е основната — тя се показва в списъци и на началната страница. Плъзнете, за да пренаредите.'),
                     ]),
 
                 Forms\Components\Section::make('Публикуване')
@@ -338,29 +341,42 @@ class ProductResource extends Resource
     }
 
     /**
-     * Filament's FileUpload keeps its state as an array ([uuid => path]) even for a
-     * single file, so wrap the stored primary-image path into that shape for the edit form.
+     * The gallery paths (ordered) for the edit form. FileUpload's afterStateHydrated
+     * wraps this list into its internal [uuid => path] shape for us.
      */
-    public static function primaryImageFormState(Product $product): array
+    public static function galleryFormState(Product $product): array
     {
-        $path = $product->media()->where('is_primary', true)->value('path');
-
-        return $path ? [(string) Str::uuid() => $path] : [];
+        return $product->media()->orderBy('position')->pluck('path')->all();
     }
 
     /**
-     * Pull the primary-image path out of submitted form data (mutating it). FileUpload may
-     * hand us a single string or a [uuid => path] array depending on the flow — handle both.
+     * Pull the ordered gallery paths out of submitted form data (mutating it).
+     * A multiple FileUpload hands us an array (possibly keyed) — return a plain ordered list.
      */
-    public static function extractImagePath(array &$data): ?string
+    public static function extractGallery(array &$data): array
     {
-        $image = $data['primary_image'] ?? null;
-        unset($data['primary_image']);
+        $gallery = $data['gallery'] ?? [];
+        unset($data['gallery']);
 
-        if (is_array($image)) {
-            $image = $image === [] ? null : (string) array_values($image)[0];
+        return array_values(is_array($gallery) ? $gallery : []);
+    }
+
+    /**
+     * Reconcile a product's media rows to match the given ordered paths: drop removed
+     * images, upsert the rest with their new position, and mark the first as primary.
+     */
+    public static function syncGallery(Product $product, array $paths): void
+    {
+        $paths = array_values($paths);
+
+        // Remove media whose file is no longer in the submitted set.
+        $product->media()->whereNotIn('path', $paths)->delete();
+
+        foreach ($paths as $index => $path) {
+            $product->media()->updateOrCreate(
+                ['path' => $path],
+                ['type' => 'image', 'is_primary' => $index === 0, 'position' => $index],
+            );
         }
-
-        return ($image === '' || $image === null) ? null : $image;
     }
 }
