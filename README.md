@@ -1,85 +1,79 @@
 # Planora
 
-A small, scalable **e-commerce platform** for branded lifestyle & planning products.
+Planora is a **bilingual (Bulgarian / English) full-stack e-commerce platform** — a Vue 3
+storefront backed by a Filament administration system for managing products, variants,
+pricing, media, translations, and publication workflows. It is built to be
+**category-agnostic**, so new product types plug in without rework.
 
-The first product category is yearly planning notebooks, but Planora is built to be
-**category-agnostic** — stickers, accessories, bundles, and digital products will be added
-over time. The long-term goal is a responsive, polished customer storefront (banners,
-product galleries, video, marketing sections, smooth checkout flow) backed by an admin
-back-office for managing categories, products, pricing, stock, media, homepage content,
-and orders.
-
-> Private project. Fully separate from any other codebase or database.
+> Built as a real production application, with security, data safety, and performance
+> treated as first-class concerns rather than afterthoughts.
 
 ## Tech stack
 
-- **Backend:** Laravel 12 (PHP 8.2)
-- **Frontend:** Inertia.js + Vue 3 + TypeScript, Tailwind CSS, Vite
-- **Admin:** Filament 3
-- **Database:** MySQL (`planora`)
-- **Testing/Quality:** Pest, Laravel Pint, ESLint/Prettier
+- **Laravel 12** (PHP 8.2) — application backend
+- **Vue 3 + TypeScript** — storefront UI
+- **Inertia.js** — connects Laravel routes to Vue pages (single codebase, no separate API)
+- **Tailwind CSS** + **Vite**
+- **Filament 3** — administration panel
+- **MySQL**
+- **spatie/laravel-translatable** — bg/en content
+- **Glide** — on-the-fly image optimization (responsive WebP)
+- **Swiper** — interactive product gallery
+- **Pest** — automated tests · **Laravel Pint** / ESLint / Prettier — formatting
 
-> Note: the base Laravel app is in place; the frontend stack and admin are being layered
-> on. See [`SESSIONS_CONTEXT.md`](./SESSIONS_CONTEXT.md) for current status.
+## Key features (implemented)
 
-## Domain model
+- **Bilingual storefront and admin** (Bulgarian primary, English secondary) via JSON translation columns
+- **Category & product management** through a custom Filament admin
+- **Product variants** using a default-variant pattern (a simple product transparently maps to one hidden variant carrying price/stock/SKU)
+- **Scheduled pricing** — timezone-aware sale windows (a sale price activates and expires on set dates, Europe/Sofia)
+- **Publication workflow** — draft / published state so unfinished products never reach customers
+- **Media synchronisation** — reorderable multi-image upload in admin, kept in sync with an ordered gallery
+- **On-the-fly image optimization** — Glide serves responsive, cached WebP (a 2.8 MB source becomes ~47 KB)
+- **Interactive product gallery** — Swiper with thumbnails, arrows, swipe, keyboard, and zoom (code-split to the product page)
+- **Automated tests** — Pest feature tests covering pricing logic and the variant wiring
+
+## Architecture
+
+Laravel serves as the backend; **Inertia.js** bridges Laravel routes and **Vue 3** pages, so
+the app is a single codebase with SPA-smooth navigation and no separate REST API. **MySQL**
+handles persistence, **Filament** provides the administrative workflows, and **Glide**
+performs image processing at request time.
+
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for a fuller map of the stack and folders.
 
 ```
-Category → Product → Product media → Content sections → Cart → Order → Admin
+Category → Product → Product variants → Product media → (Cart → Order)
 ```
-
-## Requirements
-
-- XAMPP (Apache + MySQL), PHP 8.2
-- Composer 2.x, Node.js + npm
 
 ## Local setup
 
-1. **Create the database** (once): in phpMyAdmin, create an empty database named `planora`
-   (collation `utf8mb4_general_ci`).
-2. **Install dependencies:**
-   ```bash
-   composer install
-   npm install
-   ```
-3. **Environment:** copy `.env.example` to `.env`, then:
-   ```bash
-   php artisan key:generate
-   php artisan migrate
-   ```
-   The `.env` is preconfigured for MySQL (`DB_DATABASE=planora`, user `root`, empty password).
-4. **Build front-end assets:**
-   ```bash
-   npm run dev      # during development (hot reload)
-   # or: npm run build   # production build
-   ```
+Requirements: PHP 8.2, Composer 2.x, Node.js + npm, MySQL (XAMPP recommended).
 
-## Running the app
+1. Clone the repository.
+2. Copy `.env.example` to `.env`.
+3. Install dependencies: `composer install` and `npm install`.
+4. Generate the app key: `php artisan key:generate`.
+5. Create an empty MySQL database named `planora` and configure the `DB_*` values in `.env`.
+6. Run migrations and seeders: `php artisan migrate --seed`.
+7. Start the app: `npm run dev` (Vite) and serve `public/` via Apache (port 8080) or `php artisan serve`.
 
-Planora is served by **Apache** (XAMPP) via a virtual host on port **8080**, pointing at
-the `public/` directory.
+Then open **http://localhost:8080**.
 
-- Start **Apache** and **MySQL** in the XAMPP Control Panel.
-- Open **http://localhost:8080**
+## Testing
 
-> A backup dev server is available with `php artisan serve` (http://127.0.0.1:8000), but
-> Apache on :8080 is the primary, recommended way to run Planora locally.
-
-## Project structure
-
-Standard Laravel layout. Key entry points:
-
-```
-app/            Application code (models, controllers, providers)
-config/         Framework & app configuration
-database/       Migrations, factories, seeders
-public/         Web root (Apache DocumentRoot) — index.php
-resources/      Views, CSS, JS/TS front-end source
-routes/         web.php, console.php
-tests/          Pest tests
+```bash
+php artisan test
 ```
 
-## Status
+Tests run against an in-memory SQLite database, so they never touch your development data.
 
-Foundation complete (Laravel + MySQL + Apache + Git). Frontend stack and admin in progress.
-No payments, customer accounts, reviews, or other advanced features yet — by design.
+## Current status
+
+Planora is under **active development**. Implemented: the core catalogue, Filament
+administration, bilingual content, variant and scheduled pricing, media synchronisation,
+image optimization, and the storefront product page with an interactive gallery.
+
+In development: the marketing homepage sections (blog, testimonials, newsletter),
+cart and checkout, and commercial integrations (payments). These are intentionally staged
+rather than stubbed — the status above reflects what actually works today.
