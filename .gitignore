@@ -22,3 +22,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Internal working docs (AI session context, roadmap) — kept local, not public
+/CLAUDE.md
+/SESSIONS_CONTEXT.md
