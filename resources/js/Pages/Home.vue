@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
-
-type Locale = 'en' | 'bg';
+import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import StorefrontLayout from '../Layouts/StorefrontLayout.vue';
+import { useLocale } from '../composables/useLocale';
 
 interface Translated {
     en: string;
@@ -19,6 +19,7 @@ interface Product {
     slug: string;
     name: Translated;
     category: Translated;
+    image: string | null; // primary media path, or null → emoji fallback
     priceFrom: number; // cents
     onSale: boolean;
     variantCount: number;
@@ -30,14 +31,13 @@ defineProps<{
     products: Product[];
 }>();
 
-// Live language switch — shows off the bilingual catalog.
-const locale = ref<Locale>('en');
+// Shared locale ref — the header toggle in StorefrontLayout flips this same value.
+const { locale } = useLocale();
 
-// Small UI dictionary so the whole page (not just product names) translates.
+// Homepage-specific copy. Header/footer strings live in StorefrontLayout.
+// NOTE: hero + info-band text is PLACEHOLDER — the shop owner refines it later.
 const ui = {
     en: {
-        nav: 'Plan beautifully',
-        heroTitle: 'Planning, made beautiful.',
         heroSub: 'Thoughtfully designed planners, notebooks and stickers to make every day feel intentional.',
         shop: 'Shop the collection',
         ourCategories: 'Browse by category',
@@ -46,11 +46,14 @@ const ui = {
         sale: 'SALE',
         options: (n: number) => (n > 1 ? `${n} options` : '1 option'),
         items: (n: number) => (n === 1 ? '1 product' : `${n} products`),
-        footer: 'Crafted with care · Available in Български & English',
+        whyTitle: 'Made to be lived in',
+        pillars: [
+            { icon: '🌿', title: 'Thoughtful by design', text: 'Every layout is drawn to give your days room to breathe — not another rigid grid.' },
+            { icon: '✍️', title: 'Made for real routines', text: 'Planners that adapt to how you actually live, work and dream.' },
+            { icon: '💛', title: 'Crafted with care', text: 'Small batches, quality paper, and details you feel the moment you open the cover.' },
+        ],
     },
     bg: {
-        nav: 'Планирай красиво',
-        heroTitle: 'Планиране, превърнато в изкуство.',
         heroSub: 'Внимателно създадени тефтери, бележници и стикери, които правят всеки ден осмислен.',
         shop: 'Разгледай колекцията',
         ourCategories: 'Разгледай по категория',
@@ -59,13 +62,18 @@ const ui = {
         sale: 'НАМАЛЕНИЕ',
         options: (n: number) => (n > 1 ? `${n} опции` : '1 опция'),
         items: (n: number) => (n === 1 ? '1 продукт' : `${n} продукта`),
-        footer: 'Изработено с грижа · Налично на Български & English',
+        whyTitle: 'Създадени, за да ги живееш',
+        pillars: [
+            { icon: '🌿', title: 'Обмислени до детайл', text: 'Всяко оформление е създадено да дава простор на дните ти — а не поредната скована таблица.' },
+            { icon: '✍️', title: 'За истинско ежедневие', text: 'Планери, които се нагаждат към начина, по който живееш, работиш и мечтаеш.' },
+            { icon: '💛', title: 'Изработени с грижа', text: 'Малки серии, качествена хартия и детайли, които усещаш още с отварянето на корицата.' },
+        ],
     },
 } as const;
 
 const t = computed(() => ui[locale.value]);
 
-// A palette of soft, playful gradients for the product "covers".
+// A palette of soft, playful gradients for products without an uploaded image.
 const accents = [
     'from-indigo-400 to-violet-500',
     'from-rose-400 to-pink-500',
@@ -83,64 +91,69 @@ const emojiFor = (slug: string): string => {
 
 const price = (cents: number): string => `€${(cents / 100).toFixed(2)}`;
 
+// Glide image helpers — same on-the-fly WebP pipeline as the product page.
+const img = (path: string, width: number): string => `/img/${path}?w=${width}&fm=webp`;
+const srcset = (path: string): string =>
+    [400, 800].map((w) => `${img(path, w)} ${w}w`).join(', ');
+
 const specsLine = (specs: Product['specs']): string =>
     specs ? Object.values(specs).join(' · ') : '';
 </script>
 
 <template>
-    <Head title="Planora — Planning, made beautiful" />
-
-    <div class="min-h-screen bg-[#fdfbf7] text-slate-800 antialiased">
-        <!-- ✨ seasonal banner — a seasonal promo; remove after the big day ✨ -->
-        <div class="relative overflow-hidden bg-gradient-to-r from-rose-500 via-pink-500 to-fuchsia-500 px-6 py-4 text-center text-white shadow-md">
-            <p class="text-lg font-bold tracking-wide sm:text-2xl">🌹 Welcome to Planora! ♥</p>
-            <p class="mt-1 text-sm text-rose-50 sm:text-base">
-                You're a planner for every day — thoughtfully designed! 💕
-            </p>
-        </div>
-
-        <!-- Nav -->
-        <header class="sticky top-0 z-20 border-b border-black/5 bg-[#fdfbf7]/80 backdrop-blur">
-            <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-                <div class="flex items-baseline gap-2">
-                    <span class="text-2xl font-extrabold tracking-tight">Planora</span>
-                    <span class="hidden text-sm text-slate-400 sm:inline">· {{ t.nav }}</span>
-                </div>
-                <div class="flex items-center rounded-full bg-slate-100 p-1 text-sm font-semibold">
-                    <button
-                        class="rounded-full px-3 py-1 transition"
-                        :class="locale === 'en' ? 'bg-white shadow text-slate-900' : 'text-slate-500'"
-                        @click="locale = 'en'"
-                    >EN</button>
-                    <button
-                        class="rounded-full px-3 py-1 transition"
-                        :class="locale === 'bg' ? 'bg-white shadow text-slate-900' : 'text-slate-500'"
-                        @click="locale = 'bg'"
-                    >БГ</button>
-                </div>
-            </div>
-        </header>
+    <StorefrontLayout>
+        <Head title="Planora — Planning, made beautiful" />
 
         <!-- Hero -->
         <section class="relative overflow-hidden">
             <div class="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-violet-300/40 blur-3xl"></div>
             <div class="pointer-events-none absolute -right-20 top-10 h-72 w-72 rounded-full bg-rose-300/40 blur-3xl"></div>
             <div class="relative mx-auto max-w-6xl px-6 py-20 text-center sm:py-28">
-                <!-- Flower garland above -->
-                <div class="select-none text-2xl sm:text-3xl">🌷&nbsp;🌸&nbsp;🌹&nbsp;🌼&nbsp;💐&nbsp;🌸&nbsp;🌷</div>
+                <!-- Wordmark flanked by fluid line-art botanicals (mirrored SVG sprigs) -->
+                <div class="flex items-center justify-center gap-1 sm:gap-4">
+                    <!-- Left sprig: arching stem, three leaves, a blossom at the tip -->
+                    <svg class="w-16 shrink-0 sm:w-32" viewBox="0 0 150 70" fill="none" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="floral-l" x1="0" y1="1" x2="1" y2="0">
+                                <stop offset="0%" stop-color="#8b5cf6" />
+                                <stop offset="50%" stop-color="#d946ef" />
+                                <stop offset="100%" stop-color="#f43f5e" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M148 44 C 112 50, 82 42, 46 20" stroke="url(#floral-l)" stroke-width="1.6" stroke-linecap="round" />
+                        <g fill="url(#floral-l)">
+                            <path d="M104 44 C 101 33, 107 26, 116 28 C 111 35, 108 41, 104 44 Z" />
+                            <path d="M80 38 C 83 49, 76 56, 67 53 C 72 47, 76 40, 80 38 Z" />
+                            <path d="M62 28 C 59 17, 65 10, 74 12 C 69 19, 66 25, 62 28 Z" />
+                            <circle cx="46" cy="20" r="3.4" />
+                        </g>
+                        <circle cx="46" cy="20" r="1.3" fill="#fff" fill-opacity="0.85" />
+                    </svg>
 
-                <!-- Planora wordmark in flowing script, flowers either side -->
-                <div class="mt-2 flex items-center justify-center gap-3 sm:gap-6">
-                    <span class="-rotate-12 select-none text-4xl sm:text-6xl">🌹</span>
                     <h1
                         style="font-family: 'Great Vibes', cursive"
                         class="bg-gradient-to-r from-rose-500 via-fuchsia-500 to-violet-500 bg-clip-text pb-2 text-7xl leading-none text-transparent sm:text-9xl"
                     >Planora</h1>
-                    <span class="rotate-12 select-none text-4xl sm:text-6xl">🌷</span>
-                </div>
 
-                <!-- Flower garland below -->
-                <div class="mt-1 select-none text-2xl sm:text-3xl">🌸&nbsp;🌼&nbsp;🌹&nbsp;🌷&nbsp;🌺&nbsp;🌼&nbsp;🌸</div>
+                    <!-- Right sprig: the same motif, horizontally mirrored -->
+                    <svg class="w-16 shrink-0 -scale-x-100 sm:w-32" viewBox="0 0 150 70" fill="none" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="floral-r" x1="0" y1="1" x2="1" y2="0">
+                                <stop offset="0%" stop-color="#8b5cf6" />
+                                <stop offset="50%" stop-color="#d946ef" />
+                                <stop offset="100%" stop-color="#f43f5e" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M148 44 C 112 50, 82 42, 46 20" stroke="url(#floral-r)" stroke-width="1.6" stroke-linecap="round" />
+                        <g fill="url(#floral-r)">
+                            <path d="M104 44 C 101 33, 107 26, 116 28 C 111 35, 108 41, 104 44 Z" />
+                            <path d="M80 38 C 83 49, 76 56, 67 53 C 72 47, 76 40, 80 38 Z" />
+                            <path d="M62 28 C 59 17, 65 10, 74 12 C 69 19, 66 25, 62 28 Z" />
+                            <circle cx="46" cy="20" r="3.4" />
+                        </g>
+                        <circle cx="46" cy="20" r="1.3" fill="#fff" fill-opacity="0.85" />
+                    </svg>
+                </div>
 
                 <p
                     class="mx-auto mt-8 max-w-xl text-xl italic text-slate-600"
@@ -175,17 +188,32 @@ const specsLine = (specs: Product['specs']): string =>
         <section id="products" class="mx-auto max-w-6xl px-6 py-12">
             <h2 class="text-2xl font-bold tracking-tight">{{ t.featured }}</h2>
             <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                <article
+                <!-- Each card links to its product page (client-side Inertia nav) -->
+                <Link
                     v-for="(product, i) in products"
                     :key="product.slug"
-                    class="group overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                    :href="`/products/${product.slug}`"
+                    class="group block overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
                 >
-                    <!-- Cover -->
-                    <div
-                        class="relative flex h-44 items-center justify-center bg-gradient-to-br"
-                        :class="accents[i % accents.length]"
-                    >
-                        <span class="text-6xl drop-shadow-sm">{{ emojiFor(product.slug) }}</span>
+                    <!-- Cover: real Glide image when available, else a soft gradient + emoji -->
+                    <div class="relative aspect-[4/3] overflow-hidden">
+                        <img
+                            v-if="product.image"
+                            :src="img(product.image, 600)"
+                            :srcset="srcset(product.image)"
+                            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                            :alt="product.name[locale]"
+                            loading="lazy"
+                            class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                        />
+                        <div
+                            v-else
+                            class="flex h-full w-full items-center justify-center bg-gradient-to-br"
+                            :class="accents[i % accents.length]"
+                        >
+                            <span class="text-6xl drop-shadow-sm">{{ emojiFor(product.slug) }}</span>
+                        </div>
+
                         <span
                             v-if="product.onSale"
                             class="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-bold tracking-wide text-rose-600 shadow"
@@ -205,14 +233,22 @@ const specsLine = (specs: Product['specs']): string =>
                             <span class="text-xl font-extrabold text-slate-900">{{ price(product.priceFrom) }}</span>
                         </div>
                     </div>
-                </article>
+                </Link>
             </div>
         </section>
 
-        <!-- Footer -->
-        <footer class="mt-12 border-t border-black/5 py-10 text-center">
-            <p class="text-lg font-extrabold tracking-tight">Planora</p>
-            <p class="mt-2 text-sm text-slate-400">{{ t.footer }}</p>
-        </footer>
-    </div>
+        <!-- Info band: why Planora (PLACEHOLDER copy — the shop owner refines) -->
+        <section class="border-y border-black/5 bg-white/60">
+            <div class="mx-auto max-w-6xl px-6 py-16">
+                <h2 class="text-center text-2xl font-bold tracking-tight sm:text-3xl">{{ t.whyTitle }}</h2>
+                <div class="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-3">
+                    <div v-for="pillar in t.pillars" :key="pillar.title" class="text-center">
+                        <div class="text-4xl">{{ pillar.icon }}</div>
+                        <h3 class="mt-4 text-lg font-bold">{{ pillar.title }}</h3>
+                        <p class="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-slate-500">{{ pillar.text }}</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </StorefrontLayout>
 </template>
