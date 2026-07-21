@@ -48,7 +48,7 @@ const { locale } = useLocale();
         <footer class="mt-16 border-t border-black/5 py-10 text-center">
             <p class="text-lg font-extrabold tracking-tight">Planora</p>
             <p class="mt-2 text-sm text-slate-400">
-                {{ locale === 'bg' ? 'Изработено с грижа' : 'Crafted with care' }} · Български &amp; English
+                {{ locale === 'bg' ? 'Изработено с грижа' : 'Crafted with care' }}
             </p>
         </footer>
     </div>

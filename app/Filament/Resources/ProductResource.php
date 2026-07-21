@@ -92,8 +92,9 @@ class ProductResource extends Resource
                         Forms\Components\TextInput::make('sale_price')
                             ->label('Промоцена (€)')
                             ->numeric()
-                            ->minValue(0)
-                            ->helperText('Оставете празно, ако няма промоция.'),
+                            ->minValue(0.01)
+                            ->lt('price')
+                            ->helperText('Оставете празно, ако няма промоция. Трябва да е под редовната цена.'),
 
                         Forms\Components\DateTimePicker::make('sale_starts_at')
                             ->label('Промоция от')

@@ -39,6 +39,7 @@ class HomeController extends Controller
                     'category' => $product->category->getTranslations('name'),
                     'image' => $product->primaryMedia?->path, // null → card shows the emoji fallback
                     'priceFrom' => (int) ($variants->min(fn ($v) => $v->current_price) ?? 0),
+                    'regularPrice' => (int) ($variants->min(fn ($v) => $v->price) ?? 0), // pre-sale, for the struck-through
                     'onSale' => $variants->contains(fn ($v) => $v->is_on_sale),
                     'variantCount' => $variants->count(),
                     'specs' => $product->specs,

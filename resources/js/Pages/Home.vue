@@ -20,7 +20,8 @@ interface Product {
     name: Translated;
     category: Translated;
     image: string | null; // primary media path, or null → emoji fallback
-    priceFrom: number; // cents
+    priceFrom: number; // cents — what the customer pays (current)
+    regularPrice: number; // cents — pre-sale price, for the struck-through
     onSale: boolean;
     variantCount: number;
     specs: Record<string, string | number> | null;
@@ -91,6 +92,11 @@ const emojiFor = (slug: string): string => {
 
 const price = (cents: number): string => `€${(cents / 100).toFixed(2)}`;
 
+// Discount as a rounded whole percent, e.g. 1999 -> 999 = 50. Guarded so a
+// missing/invalid regular price can't produce NaN or a nonsense badge.
+const discountPct = (regular: number, current: number): number =>
+    regular > current && regular > 0 ? Math.round((1 - current / regular) * 100) : 0;
+
 // Glide image helpers — same on-the-fly WebP pipeline as the product page.
 const img = (path: string, width: number): string => `/img/${path}?w=${width}&fm=webp`;
 const srcset = (path: string): string =>
@@ -110,9 +116,9 @@ const specsLine = (specs: Product['specs']): string =>
             <div class="pointer-events-none absolute -right-20 top-10 h-72 w-72 rounded-full bg-rose-300/40 blur-3xl"></div>
             <div class="relative mx-auto max-w-6xl px-6 py-20 text-center sm:py-28">
                 <!-- Wordmark flanked by fluid line-art botanicals (mirrored SVG sprigs) -->
-                <div class="flex items-center justify-center gap-1 sm:gap-4">
-                    <!-- Left sprig: arching stem, three leaves, a blossom at the tip -->
-                    <svg class="w-16 shrink-0 sm:w-32" viewBox="0 0 150 70" fill="none" aria-hidden="true">
+                <div class="flex items-center justify-center gap-2 sm:gap-6">
+                    <!-- Left sprig: main stem + lower offshoot, six leaves, buds, a blossom -->
+                    <svg class="w-20 shrink-0 sm:w-40" viewBox="0 0 160 80" fill="none" aria-hidden="true">
                         <defs>
                             <linearGradient id="floral-l" x1="0" y1="1" x2="1" y2="0">
                                 <stop offset="0%" stop-color="#8b5cf6" />
@@ -120,23 +126,31 @@ const specsLine = (specs: Product['specs']): string =>
                                 <stop offset="100%" stop-color="#f43f5e" />
                             </linearGradient>
                         </defs>
-                        <path d="M148 44 C 112 50, 82 42, 46 20" stroke="url(#floral-l)" stroke-width="1.6" stroke-linecap="round" />
-                        <g fill="url(#floral-l)">
-                            <path d="M104 44 C 101 33, 107 26, 116 28 C 111 35, 108 41, 104 44 Z" />
-                            <path d="M80 38 C 83 49, 76 56, 67 53 C 72 47, 76 40, 80 38 Z" />
-                            <path d="M62 28 C 59 17, 65 10, 74 12 C 69 19, 66 25, 62 28 Z" />
-                            <circle cx="46" cy="20" r="3.4" />
+                        <g stroke="url(#floral-l)" stroke-width="1.4" stroke-linecap="round">
+                            <path d="M158 46 C 116 52, 84 44, 44 20" />
+                            <path d="M120 49 C 100 60, 74 64, 52 56" />
                         </g>
-                        <circle cx="46" cy="20" r="1.3" fill="#fff" fill-opacity="0.85" />
+                        <g fill="url(#floral-l)">
+                            <path d="M120 45 C 117 33, 124 26, 134 28 C 128 35, 125 42, 120 45 Z" />
+                            <path d="M97 39 C 100 51, 92 59, 81 56 C 88 49, 92 42, 97 39 Z" />
+                            <path d="M78 33 C 75 21, 82 14, 92 16 C 86 23, 83 30, 78 33 Z" />
+                            <path d="M60 25 C 57 13, 64 6, 74 8 C 68 15, 65 22, 60 25 Z" />
+                            <path d="M104 53 C 107 64, 100 71, 90 69 C 96 63, 100 57, 104 53 Z" />
+                            <path d="M84 58 C 81 69, 73 74, 64 71 C 71 66, 77 61, 84 58 Z" />
+                            <circle cx="52" cy="56" r="2.6" />
+                            <circle cx="132" cy="52" r="1.8" />
+                            <circle cx="44" cy="20" r="4" />
+                        </g>
+                        <circle cx="44" cy="20" r="1.5" fill="#fff" fill-opacity="0.85" />
                     </svg>
 
                     <h1
                         style="font-family: 'Great Vibes', cursive"
-                        class="bg-gradient-to-r from-rose-500 via-fuchsia-500 to-violet-500 bg-clip-text pb-2 text-7xl leading-none text-transparent sm:text-9xl"
+                        class="bg-gradient-to-r from-rose-500 via-fuchsia-500 to-violet-500 bg-clip-text px-2 py-4 text-7xl leading-tight text-transparent sm:py-6 sm:text-9xl"
                     >Planora</h1>
 
                     <!-- Right sprig: the same motif, horizontally mirrored -->
-                    <svg class="w-16 shrink-0 -scale-x-100 sm:w-32" viewBox="0 0 150 70" fill="none" aria-hidden="true">
+                    <svg class="w-20 shrink-0 -scale-x-100 sm:w-40" viewBox="0 0 160 80" fill="none" aria-hidden="true">
                         <defs>
                             <linearGradient id="floral-r" x1="0" y1="1" x2="1" y2="0">
                                 <stop offset="0%" stop-color="#8b5cf6" />
@@ -144,14 +158,22 @@ const specsLine = (specs: Product['specs']): string =>
                                 <stop offset="100%" stop-color="#f43f5e" />
                             </linearGradient>
                         </defs>
-                        <path d="M148 44 C 112 50, 82 42, 46 20" stroke="url(#floral-r)" stroke-width="1.6" stroke-linecap="round" />
-                        <g fill="url(#floral-r)">
-                            <path d="M104 44 C 101 33, 107 26, 116 28 C 111 35, 108 41, 104 44 Z" />
-                            <path d="M80 38 C 83 49, 76 56, 67 53 C 72 47, 76 40, 80 38 Z" />
-                            <path d="M62 28 C 59 17, 65 10, 74 12 C 69 19, 66 25, 62 28 Z" />
-                            <circle cx="46" cy="20" r="3.4" />
+                        <g stroke="url(#floral-r)" stroke-width="1.4" stroke-linecap="round">
+                            <path d="M158 46 C 116 52, 84 44, 44 20" />
+                            <path d="M120 49 C 100 60, 74 64, 52 56" />
                         </g>
-                        <circle cx="46" cy="20" r="1.3" fill="#fff" fill-opacity="0.85" />
+                        <g fill="url(#floral-r)">
+                            <path d="M120 45 C 117 33, 124 26, 134 28 C 128 35, 125 42, 120 45 Z" />
+                            <path d="M97 39 C 100 51, 92 59, 81 56 C 88 49, 92 42, 97 39 Z" />
+                            <path d="M78 33 C 75 21, 82 14, 92 16 C 86 23, 83 30, 78 33 Z" />
+                            <path d="M60 25 C 57 13, 64 6, 74 8 C 68 15, 65 22, 60 25 Z" />
+                            <path d="M104 53 C 107 64, 100 71, 90 69 C 96 63, 100 57, 104 53 Z" />
+                            <path d="M84 58 C 81 69, 73 74, 64 71 C 71 66, 77 61, 84 58 Z" />
+                            <circle cx="52" cy="56" r="2.6" />
+                            <circle cx="132" cy="52" r="1.8" />
+                            <circle cx="44" cy="20" r="4" />
+                        </g>
+                        <circle cx="44" cy="20" r="1.5" fill="#fff" fill-opacity="0.85" />
                     </svg>
                 </div>
 
@@ -215,9 +237,9 @@ const specsLine = (specs: Product['specs']): string =>
                         </div>
 
                         <span
-                            v-if="product.onSale"
-                            class="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-bold tracking-wide text-rose-600 shadow"
-                        >{{ t.sale }}</span>
+                            v-if="product.onSale && product.regularPrice > product.priceFrom"
+                            class="absolute left-4 top-4 rounded-full bg-rose-600 px-3 py-1 text-xs font-bold tracking-wide text-white shadow"
+                        >-{{ discountPct(product.regularPrice, product.priceFrom) }}%</span>
                         <span
                             v-if="product.variantCount > 1"
                             class="absolute bottom-4 right-4 rounded-full bg-black/25 px-3 py-1 text-xs font-semibold text-white backdrop-blur"
@@ -228,9 +250,13 @@ const specsLine = (specs: Product['specs']): string =>
                         <p class="text-xs font-semibold uppercase tracking-widest text-indigo-500">{{ product.category[locale] }}</p>
                         <h3 class="mt-1 text-lg font-bold leading-snug">{{ product.name[locale] }}</h3>
                         <p v-if="specsLine(product.specs)" class="mt-1 text-sm text-slate-400">{{ specsLine(product.specs) }}</p>
-                        <div class="mt-4 flex items-baseline gap-1">
+                        <div class="mt-4 flex items-baseline gap-2">
                             <span class="text-xs text-slate-400">{{ t.from }}</span>
-                            <span class="text-xl font-extrabold text-slate-900">{{ price(product.priceFrom) }}</span>
+                            <template v-if="product.onSale && product.regularPrice > product.priceFrom">
+                                <span class="text-sm text-slate-400 line-through">{{ price(product.regularPrice) }}</span>
+                                <span class="text-xl font-extrabold text-rose-600">{{ price(product.priceFrom) }}</span>
+                            </template>
+                            <span v-else class="text-xl font-extrabold text-slate-900">{{ price(product.priceFrom) }}</span>
                         </div>
                     </div>
                 </Link>

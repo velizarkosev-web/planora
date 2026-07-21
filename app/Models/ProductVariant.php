@@ -65,7 +65,9 @@ class ProductVariant extends Model
     {
         return Attribute::make(
             get: function (): bool {
-                if ($this->sale_price === null || $this->sale_price >= $this->price) {
+                // A sale price only counts when it's a real, positive amount that
+                // undercuts the regular price. 0 / negative / >= price → not on sale.
+                if ($this->sale_price === null || $this->sale_price <= 0 || $this->sale_price >= $this->price) {
                     return false;
                 }
 
