@@ -47,7 +47,9 @@ const srcset = (path: string): string =>
 
 // The thumbnail Swiper instance — the main Swiper links to it so clicking a
 // thumbnail navigates the main image (and the active thumb highlights).
-const thumbsSwiper = ref<SwiperClass | null>(null);
+// Loosely typed (`any`): Swiper's own recursive types reject a Swiper instance
+// in `thumbs.swiper` (a known upstream typing issue).
+const thumbsSwiper = ref<any>(null);
 const setThumbsSwiper = (swiper: SwiperClass): void => {
     thumbsSwiper.value = swiper;
 };
@@ -119,13 +121,13 @@ const thumbCount = computed(() => Math.min(props.product.images.length, 5));
 
             <!-- Details -->
             <div class="flex flex-col justify-center">
-                <!-- WORKED EXAMPLE: category (only if present) -->
+                <!-- category (only if present) -->
                 <p
                     v-if="product.category"
                     class="text-xs font-semibold uppercase tracking-widest text-indigo-500"
                 >{{ product.category[locale] }}</p>
 
-                <!-- WORKED EXAMPLE: product name -->
+                <!-- product name -->
                 <h1 class="mt-2 text-4xl font-bold leading-tight">{{ product.name[locale] }}</h1>
 
                 <div class="mt-4 flex items-baseline gap-3 text-2xl font-extrabold">

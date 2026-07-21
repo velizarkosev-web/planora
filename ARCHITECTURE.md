@@ -1,7 +1,7 @@
 # Planora — Architecture & Tech Stack
 
 A plain-language map of every technology in Planora, how they fit together, and what
-each important file/folder is for. Written for a developer learning the stack.
+each important file/folder is for.
 
 ---
 
@@ -114,9 +114,7 @@ These only handle the **frontend**. The backend (PHP) is served separately by Ap
 | `package.json` / `package-lock.json` | JS dependencies. |
 | `vite.config.js` | How Vite builds the frontend (Vue + Tailwind + Laravel plugins). |
 | `tsconfig.json` | TypeScript rules. |
-| `CLAUDE.md` | Project rules for the AI assistant (auto-loaded). |
 | `README.md` | Project intro + setup. |
-| `SESSIONS_CONTEXT.md` | Running log of plan, decisions, progress. |
 | `ARCHITECTURE.md` | This file. |
 
 ### Auto-generated (you don't edit or commit these)

@@ -11,7 +11,6 @@ use App\Models\ProductVariant;
 |--------------------------------------------------------------------------
 */
 
-// ── WORKED EXAMPLE (your pattern to mirror) ─────────────────────────────
 it('uses the regular price when there is no sale', function () {
     $variant = new ProductVariant(['price' => 2000]);
 
@@ -19,13 +18,11 @@ it('uses the regular price when there is no sale', function () {
         ->and($variant->current_price)->toBe(2000);
 });
 
-// ── 👉 YOU WRITE THE ASSERTIONS ─────────────────────────────────────────
 it('is on sale when the sale price is lower and there is no time window', function () {
     $variant = new ProductVariant(['price' => 2000, 'sale_price' => 1500]);
 
     expect($variant->is_on_sale)->toBeTrue()
         ->and($variant->current_price)->toBe(1500);
-    // 👉 assert: is_on_sale is TRUE, and current_price is 1500
 });
 
 it('is NOT on sale before the window opens', function () {
@@ -34,10 +31,9 @@ it('is NOT on sale before the window opens', function () {
         'sale_price' => 1500,
         'sale_starts_at' => now()->addDay(), // starts tomorrow
     ]);
-    
+
     expect($variant->is_on_sale)->toBeFalse()
         ->and($variant->current_price)->toBe(2000);
-    // 👉 assert: is_on_sale is FALSE, and current_price falls back to 2000
 });
 
 it('is NOT on sale after the window closes', function () {
@@ -50,8 +46,6 @@ it('is NOT on sale after the window closes', function () {
 
     expect($variant->is_on_sale)->toBeFalse()
         ->and($variant->current_price)->toBe(2000);
-
-    // 👉 assert: is_on_sale is FALSE
 });
 
 /*
@@ -63,9 +57,6 @@ it('is NOT on sale after the window closes', function () {
 it('converts euros to integer cents', function () {
     expect(ProductResource::toCents('19.90'))->toBe(1990)
         ->and(ProductResource::toCents(null))->toBeNull();
-    // 👉 assert BOTH, chained with ->and(...):
-    //    ProductResource::toCents('19.90')  is  1990
-    //    ProductResource::toCents(null)     is  null
 });
 
 /*
@@ -74,14 +65,13 @@ it('converts euros to integer cents', function () {
 |--------------------------------------------------------------------------
 */
 
-// ── WORKED EXAMPLE ──────────────────────────────────────────────────────
 it('saves the price onto a hidden default variant, in cents', function () {
     $category = Category::create([
         'name' => ['bg' => 'Тест', 'en' => 'Test'],
         'slug' => 'test',
     ]);
 
-    // This mirrors exactly what the Create page does on save:
+    // Mirrors exactly what the Create page does on save:
     $data = [
         'category_id' => $category->id,
         'name' => ['bg' => 'Продукт', 'en' => 'Product'],

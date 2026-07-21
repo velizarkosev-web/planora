@@ -31,7 +31,6 @@ class CategoryResource extends Resource
     {
         return $form
             ->schema([
-                // ── WORKED EXAMPLE (your pattern to mirror) ─────────────────
                 // A text input. Because the panel has the translatable plugin,
                 // this field automatically follows the BG/EN locale switcher —
                 // typing here saves into name->{"bg"} or name->{"en"}.
