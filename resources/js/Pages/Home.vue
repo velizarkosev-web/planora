@@ -116,9 +116,9 @@ const specsLine = (specs: Product['specs']): string =>
             <div class="pointer-events-none absolute -right-20 top-10 h-72 w-72 rounded-full bg-rose-300/40 blur-3xl"></div>
             <div class="relative mx-auto max-w-6xl px-6 py-20 text-center sm:py-28">
                 <!-- Wordmark flanked by fluid line-art botanicals (mirrored SVG sprigs) -->
-                <div class="flex items-center justify-center gap-2 sm:gap-6">
+                <div class="flex items-center justify-center gap-1 sm:gap-6">
                     <!-- Left sprig: main stem + lower offshoot, six leaves, buds, a blossom -->
-                    <svg class="w-20 shrink-0 sm:w-40" viewBox="0 0 160 80" fill="none" aria-hidden="true">
+                    <svg class="w-12 shrink-0 sm:w-40" viewBox="0 0 160 80" fill="none" aria-hidden="true">
                         <defs>
                             <linearGradient id="floral-l" x1="0" y1="1" x2="1" y2="0">
                                 <stop offset="0%" stop-color="#8b5cf6" />
@@ -146,11 +146,11 @@ const specsLine = (specs: Product['specs']): string =>
 
                     <h1
                         style="font-family: 'Great Vibes', cursive"
-                        class="bg-gradient-to-r from-rose-500 via-fuchsia-500 to-violet-500 bg-clip-text px-2 py-4 text-7xl leading-tight text-transparent sm:py-6 sm:text-9xl"
+                        class="bg-gradient-to-r from-rose-500 via-fuchsia-500 to-violet-500 bg-clip-text px-2 py-4 text-6xl leading-tight text-transparent sm:py-6 sm:text-8xl lg:text-9xl"
                     >Planora</h1>
 
                     <!-- Right sprig: the same motif, horizontally mirrored -->
-                    <svg class="w-20 shrink-0 -scale-x-100 sm:w-40" viewBox="0 0 160 80" fill="none" aria-hidden="true">
+                    <svg class="w-12 shrink-0 -scale-x-100 sm:w-40" viewBox="0 0 160 80" fill="none" aria-hidden="true">
                         <defs>
                             <linearGradient id="floral-r" x1="0" y1="1" x2="1" y2="0">
                                 <stop offset="0%" stop-color="#8b5cf6" />
